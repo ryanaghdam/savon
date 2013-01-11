@@ -68,7 +68,7 @@ module Savon
     def namespaces
       @namespaces ||= begin
         namespaces = SCHEMA_TYPES.dup
-        namespaces["xmlns:#{namespace_identifier}"] = @globals[:namespace] || @wsdl.namespace
+        namespaces["xmlns:#{namespace_identifier}"] = @globals[:namespace] || @wsdl.target_namespace
 
         key = ["xmlns"]
         key << env_namespace if env_namespace && env_namespace != ""
@@ -96,7 +96,7 @@ module Savon
 
     def message_tag
       message_tag = @locals[:message_tag]
-      message_tag ||= @wsdl.soap_input(@operation_name.to_sym) if @wsdl.document?
+      message_tag ||= @wsdl.operations[@operation_name.to_sym][:input].last unless @wsdl.shim?
       message_tag ||= Gyoku.xml_tag(@operation_name, :key_converter => @globals[:convert_request_keys_to])
 
       @message_tag = message_tag.to_sym
@@ -117,8 +117,8 @@ module Savon
       return @globals[:namespace_identifier] if @globals.include? :namespace_identifier
       return @namespace_identifier if @namespace_identifier
 
-      operation = @wsdl.operations[@operation_name] if @wsdl.document?
-      namespace_identifier = operation[:namespace_identifier] if operation
+      operation = @wsdl.operations[@operation_name] unless @wsdl.shim?
+      namespace_identifier = operation[:input].first if operation
       namespace_identifier ||= "wsdl"
 
       @namespace_identifier = namespace_identifier.to_sym

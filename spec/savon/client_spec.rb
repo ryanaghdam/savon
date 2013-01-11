@@ -33,7 +33,7 @@ describe Savon::Client do
       wsdl_request = mock(:build => http_request)
       Savon::WSDLRequest.expects(:new).with(instance_of(Savon::GlobalOptions)).returns(wsdl_request)
 
-      Wasabi::Document.any_instance.expects(:request=).with(http_request)
+      Wasabi.expects(:interpreter).with("http://example.com", http_request)
       Savon.client(:wsdl => "http://example.com")
     end
 
@@ -52,7 +52,7 @@ describe Savon::Client do
   describe "#operations" do
     it "returns all operation names" do
       operations = new_client.operations
-      expect(operations).to eq([:authenticate])
+      expect(operations.keys).to eq([:authenticate])
     end
 
     it "raises when there is no WSDL document" do
@@ -81,13 +81,13 @@ describe Savon::Client do
       locals = { :message => { :symbol => "AAPL" } }
       soap_response = new_soap_response
 
-      wsdl = Wasabi::Document.new('http://example.com')
+      wsdl      = Wasabi.interpreter("http://example.com")
       operation = Savon::Operation.new(:authenticate, wsdl, Savon::GlobalOptions.new)
       operation.expects(:call).with(locals).returns(soap_response)
 
       Savon::Operation.expects(:create).with(
         :authenticate,
-        instance_of(Wasabi::Document),
+        instance_of(Wasabi::Interpreter),
         instance_of(Savon::GlobalOptions)
       ).returns(operation)
 

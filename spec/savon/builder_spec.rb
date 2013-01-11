@@ -6,8 +6,8 @@ describe Savon::Builder do
 
   let(:globals)     { Savon::GlobalOptions.new }
   let(:locals)      { Savon::LocalOptions.new }
-  let(:wsdl)        { Wasabi::Document.new Fixture.wsdl(:authentication) }
-  let(:no_wsdl)     { Wasabi::Document.new }
+  let(:wsdl)        { Wasabi.interpreter Fixture.wsdl(:authentication) }
+  let(:no_wsdl)     { Wasabi::InterpreterShim.new }
 
   describe "#to_s" do
     it "includes the global :env_namespace if it's available" do

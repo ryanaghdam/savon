@@ -16,14 +16,14 @@ module Savon
         raise_initialization_error!
       end
 
-      build_wsdl_document
+      build_wsdl
     end
 
     attr_reader :globals
 
     def operations
-      raise_missing_wsdl_error! unless @wsdl.document?
-      @wsdl.soap_actions
+      raise_missing_wsdl_error! if @wsdl.shim?
+      @wsdl.operations
     end
 
     def operation(operation_name)
@@ -38,14 +38,16 @@ module Savon
 
     private
 
-    def build_wsdl_document
-      @wsdl = Wasabi::Document.new
+    def build_wsdl
+      if @globals.include? :wsdl
+        http_request = WSDLRequest.new(@globals).build
+        @wsdl = Wasabi.interpreter(@globals[:wsdl], http_request)
+      else
+        @wsdl = Wasabi::InterpreterShim.new
+      end
 
-      @wsdl.document  = @globals[:wsdl]      if @globals.include? :wsdl
-      @wsdl.endpoint  = @globals[:endpoint]  if @globals.include? :endpoint
-      @wsdl.namespace = @globals[:namespace] if @globals.include? :namespace
-
-      @wsdl.request = WSDLRequest.new(@globals).build
+      @wsdl.soap_endpoint    = @globals[:endpoint]  if @globals.include? :endpoint
+      @wsdl.target_namespace = @globals[:namespace] if @globals.include? :namespace
     end
 
     def persist_last_response(response)

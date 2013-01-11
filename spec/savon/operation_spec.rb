@@ -6,14 +6,12 @@ require "ostruct"
 describe Savon::Operation do
 
   let(:globals) { Savon::GlobalOptions.new(:endpoint => @server.url(:repeat), :log => false) }
-  let(:wsdl)    { Wasabi::Document.new Fixture.wsdl(:taxcloud) }
+  let(:wsdl)    { Wasabi.interpreter Fixture.wsdl(:taxcloud) }
 
   let(:no_wsdl) {
-    wsdl = Wasabi::Document.new
-
-    wsdl.endpoint  = "http://example.com"
-    wsdl.namespace = "http://v1.example.com"
-
+    wsdl = Wasabi::InterpreterShim.new
+    wsdl.soap_endpoint    = "http://example.com"
+    wsdl.target_namespace = "http://v1.example.com"
     wsdl
   }
 
@@ -74,7 +72,7 @@ describe Savon::Operation do
 
     it "falls back to use the WSDL's endpoint if the :endpoint option was not set" do
       globals_without_endpoint = Savon::GlobalOptions.new(:log => false)
-      HTTPI::Request.any_instance.expects(:url=).with(wsdl.endpoint)
+      HTTPI::Request.any_instance.expects(:url=).with(wsdl.soap_endpoint)
 
       operation = new_operation(:verify_address, wsdl, globals_without_endpoint)
 

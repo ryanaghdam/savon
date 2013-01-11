@@ -9,7 +9,7 @@ module Savon
   class Operation
 
     def self.create(operation_name, wsdl, globals)
-      if wsdl.document?
+      unless wsdl.shim?
         ensure_name_is_symbol! operation_name
         ensure_exists! operation_name, wsdl
       end
@@ -18,9 +18,9 @@ module Savon
     end
 
     def self.ensure_exists!(operation_name, wsdl)
-      unless wsdl.soap_actions.include? operation_name
+      unless wsdl.operations.include? operation_name
         raise ArgumentError, "Unable to find SOAP operation: #{operation_name.inspect}\n" \
-                             "Operations provided by your service: #{wsdl.soap_actions.inspect}"
+                             "Operations provided by your service: #{wsdl.operations.inspect}"
       end
     end
 
@@ -82,13 +82,13 @@ module Savon
       # get the soap_action from local options
       soap_action = @locals[:soap_action]
       # with no local option, but a wsdl, ask it for the soap_action
-      soap_action ||= @wsdl.soap_action(@name.to_sym) if @wsdl.document?
+      soap_action ||= @wsdl.operations[@name.to_sym][:soap_action] unless @wsdl.shim?
       # if there is no soap_action up to this point, fallback to a simple default
       soap_action ||= Gyoku.xml_tag(@name, :key_converter => @globals[:convert_request_keys_to])
     end
 
     def endpoint
-      @globals[:endpoint] || @wsdl.endpoint
+      @globals[:endpoint] || @wsdl.soap_endpoint
     end
 
     def log_request(request)
